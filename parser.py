@@ -7,15 +7,21 @@ PRACTICE_RE=re.compile(r"\b\d{4,7}\s+([A-Z]{2,3}[0-9]{3}[A-Z]{0,2})\b",re.I)
 DATE_RE=re.compile(r"\b\d{2}-\d{2}-\d{4}(?:,\s*\d{2}:\d{2})?\b")
 
 STATES=[
-"Lavorazione - in Attesa - VHL Presente",
-"Lavorazione - in Attesa",
-"Lavorazione - Pianificata",
-"Lavorazione - in Corso",
-"Lavorazione - Terminata",
-"Preventivo - In Attesa di Autorizzazione",
-"Da Fatturare",
+    "Inserita - Pending",
+    "Perizia - Pianificata",
+    "Preventivo - Da Elaborare",
+    "Preventivo - Autorizzato al Network",
+    "Preventivo - In Attesa di Autorizzazione",
+    "Lavorazione - Da Pianificare",
+    "Lavorazione - Pianificata",
+    "Lavorazione - in Attesa - VHL Presente",
+    "Lavorazione - in Corso",
+    "Lavorazione - Terminata",
+    "Da Fatturare",
+    "Fatturata",
+    "Senza Seguito - Pratica Annullata",
+    "Lavorazione - da ultimare",
 ]
-
 TYPES=[
 "GRANDINE + CRISTALLO",
 "ATTO VANDALICO",
@@ -94,9 +100,37 @@ def parse_inova(raw):
             if p>=0 and (pos<0 or p<pos):
                 pos=p; state=st
         if pos<0:
-            continue
-        owner=clean(tail[:pos])
-        after=tail[pos+len(state):].strip()
+            # Fallback: do not discard the practice just because Inova introduced
+            # a new state. The owner is followed by the state and then by the claim type.
+            fallback_pos=-1
+            for t in sorted(TYPES,key=len,reverse=True):
+                p=tail.find(t)
+                if p>0:
+                    fallback_pos=p
+                    break
+            if fallback_pos>0:
+                owner_and_state=clean(tail[:fallback_pos])
+                # Owner is generally the first 1-4 words. Prefer the last known
+                # state-like segment after the owner; otherwise keep a useful value.
+                words=owner_and_state.split()
+                if len(words)>=2:
+                    # Common customer names/company names are short; preserve a
+                    # conservative owner prefix and use the remainder as state.
+                    owner=" ".join(words[:min(4,len(words)-1)])
+                    state=" ".join(words[min(4,len(words)-1):]).strip()
+                    after=tail[fallback_pos:].strip()
+                    if not state:
+                        owner=owner_and_state
+                        state="Non riconosciuto"
+                else:
+                    owner=owner_and_state
+                    state="Non riconosciuto"
+                pos=fallback_pos
+            else:
+                continue
+        else:
+            owner=clean(tail[:pos])
+            after=tail[pos+len(state):].strip()
 
         # Find claim type after state.
         typ=""
