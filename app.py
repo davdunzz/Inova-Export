@@ -89,6 +89,10 @@ class App(tk.Tk):
         if not fields: return messagebox.showwarning("Campi mancanti","Seleziona almeno un campo.")
         try:
             self.rows=parse_export(raw, fields)
+            if not self.rows:
+                self.status.config(text="Nessuna riga riconosciuta. Controlla che l'intestazione includa Targa.", foreground="#B04A00")
+                messagebox.showwarning("Nessun dato riconosciuto", "Non ho trovato righe valide. Verifica che il testo copiato contenga la riga delle intestazioni e le targhe.")
+                return
             self.refresh_table(fields)
             self.status.config(text=f"Elaborate {len(self.rows)} righe.", foreground=GREEN)
         except Exception as e:
