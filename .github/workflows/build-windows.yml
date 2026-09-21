@@ -29,7 +29,7 @@ jobs:
         run: |
           pyinstaller --noconfirm --clean --onefile --windowed --name DLab_Data_Extractor app.py
 
-      - name: Upload EXE
+      - name: Upload Windows EXE
         uses: actions/upload-artifact@v4
         with:
           name: DLab-Data-Extractor-Windows
