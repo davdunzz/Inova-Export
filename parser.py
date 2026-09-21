@@ -36,18 +36,26 @@ def clean(s):
     return re.sub(r"\s+"," ",str(s).replace("\xa0"," ").strip())
 
 def find_starts(lines):
+    """Find only true practice starts.
+
+    Inova records always start with:
+        NUMERO PRATICA + TARGA PRINCIPALE + DATA CREAZIONE
+
+    We deliberately do NOT use a generic plate/date fallback: later in the
+    same record Inova can contain the plate of a substitute vehicle.
+    That plate must remain part of the current record and never start a new one.
+    """
     starts=[]
     for i,line in enumerate(lines):
         if "Non è possibile cancellare questo file" in line:
             continue
-        # Primary: practice number + Italian plate + creation date on the same line.
-        if PRACTICE_RE.search(line) and DATE_RE.search(line):
-            starts.append(i)
+        pm=PRACTICE_RE.search(line)
+        if not pm:
             continue
-        # Fallback: any valid Italian plate and a date on the line.
-        if PLATE_RE.search(line) and DATE_RE.search(line):
+        # The creation date must be after the practice number + main plate.
+        if DATE_RE.search(line, pm.end()):
             starts.append(i)
-    return list(dict.fromkeys(starts))
+    return starts
 
 def parse_inova(raw):
     raw=raw.replace("\r\n","\n").replace("\r","\n").replace("\ufeff","")
@@ -65,22 +73,20 @@ def parse_inova(raw):
 
         first=clean(block[0])
         pm=PRACTICE_RE.search(first)
-        pl=PLATE_RE.search(first)
-        if not pl: continue
+        if not pm:
+            continue
 
-        plate=pl.group(1).upper()
-        # Creation date is the date immediately after the plate when present.
-        after_plate=first[pl.end():]
-        cm=DATE_RE.search(after_plate)
+        # The plate immediately following the practice number is always the
+        # main vehicle plate. Any later plate belongs to fields inside this
+        # same record (e.g. substitute vehicle) and is ignored as a key.
+        plate=pm.group(2).upper()
+        cm=DATE_RE.search(first, pm.end())
         created=cm.group(0) if cm else ""
 
         # Join all lines in the record. Remove only the first header values.
         tail=clean(" ".join(block))
         # Remove practice number + plate if present, otherwise remove plate.
-        if pm:
-            tail=tail[pm.end():].strip()
-        else:
-            tail=tail[pl.end():].strip()
+        tail=tail[pm.end():].strip()
         if created:
             tail=tail.replace(created,"",1).strip()
 
