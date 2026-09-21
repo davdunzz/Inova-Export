@@ -1,22 +1,7 @@
-# DLab Data Extractor v5
+# DLab Data Extractor v6
 
-Parser locale dedicato alle esportazioni Inova.
+Versione robusta per esportazioni Inova.
 
-Stati Inova riconosciuti:
-- Inserita - Pending
-- Perizia - Pianificata
-- Preventivo - Da Elaborare
-- Preventivo - Autorizzato al Network
-- Preventivo - In Attesa di Autorizzazione
-- Lavorazione - Da Pianificare
-- Lavorazione - Pianificata
-- Lavorazione - in Attesa - VHL Presente
-- Lavorazione - in Corso
-- Lavorazione - Terminata
-- Da Fatturare
-- Fatturata
-- Senza Seguito - Pratica Annullata
-- Lavorazione - da ultimare
+Corregge il crash `NoneType ... group`, riconosce le pratiche tramite numero pratica + targa + data, mantiene le pratiche anche con stati nuovi e supporta stati come `Fatturata`, `Senza Seguito - Pratica Annullata`, `In Attesa Documenti` e `Da Ricontattare`.
 
-Il parser include anche un fallback per non scartare una pratica se Inova introduce uno stato nuovo.
 Nessuna AI, nessuna API, nessun invio online.
