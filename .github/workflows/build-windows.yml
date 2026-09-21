@@ -11,26 +11,27 @@ jobs:
     runs-on: windows-latest
 
     steps:
-      - name: Scarica il repository
+      - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Installa Python
+      - name: Setup Python
         uses: actions/setup-python@v5
         with:
           python-version: "3.12"
 
-      - name: Installa dipendenze
+      - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
           pip install pyinstaller
 
-      - name: Crea EXE
+      - name: Build Windows EXE
         run: |
           pyinstaller --noconfirm --clean --onefile --windowed --name DLab_Data_Extractor app.py
 
-      - name: Pubblica EXE
+      - name: Upload Windows EXE
         uses: actions/upload-artifact@v4
         with:
           name: DLab-Data-Extractor-Windows
           path: dist/DLab_Data_Extractor.exe
+          
